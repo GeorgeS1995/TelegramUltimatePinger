@@ -1,4 +1,6 @@
 import os
+import time
+
 import requests
 from pyrogram import Client, filters
 from dotenv import load_dotenv
@@ -14,6 +16,7 @@ app = Client(
 )
 
 TRUSTED_STATUS = ["creator", "administrator"]
+MENTION_BATCH_SIZE = 10
 
 
 def _can_user_ping(user, users) -> bool:
@@ -25,8 +28,12 @@ def _can_user_ping(user, users) -> bool:
 def ping_all(client, msg, *args):
     chat_user = client.get_chat_members(msg.chat.id)
     if _can_user_ping(msg.from_user, chat_user):
-        mentions = [cu['user'].mention() for cu in chat_user]
-        msg.reply_text(f"{' '.join(mentions)} {' '.join(args)}")
+        all_mentions = [cu['user'].mention() for cu in chat_user]
+        start_index = 0
+        while start_index < len(all_mentions):
+            msg.reply_text(f"{' '.join(all_mentions[start_index:start_index + MENTION_BATCH_SIZE])} {' '.join(args)}")
+            time.sleep(0.5)
+            start_index += MENTION_BATCH_SIZE
         return
     msg.reply_text("У вас нету прав так шалить")
 
